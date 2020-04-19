@@ -1,0 +1,14 @@
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\obj\Debug\grafikaPZ2.csprojAssemblyReference.cache
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\obj\Debug\MainWindow.g.cs
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\obj\Debug\App.g.cs
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\obj\Debug\grafikaPZ2_MarkupCompile.cache
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\obj\Debug\grafikaPZ2_MarkupCompile.lref
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\bin\Debug\grafikaPZ2.exe.config
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\bin\Debug\grafikaPZ2.exe
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\bin\Debug\grafikaPZ2.pdb
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\obj\Debug\MainWindow.baml
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\obj\Debug\grafikaPZ2.g.resources
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\obj\Debug\grafikaPZ2.Properties.Resources.resources
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\obj\Debug\grafikaPZ2.csproj.GenerateResource.cache
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\obj\Debug\grafikaPZ2.exe
+C:\Users\HP 650 G2\Documents\GitHub\Grafika-pz2\grafikaPZ2\grafikaPZ2\obj\Debug\grafikaPZ2.pdb
