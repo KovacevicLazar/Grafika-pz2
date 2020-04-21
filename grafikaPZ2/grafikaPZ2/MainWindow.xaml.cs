@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml;
 using System.Xml.Linq;
 using grafikaPZ2.Model;
 
@@ -21,20 +22,155 @@ namespace grafikaPZ2
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
+    /// 
+   
     public partial class MainWindow : Window
     {
+
+
+        public const double minLongitude = 19.727275;
+        public const double maxLongitude = 19.950944;
+
+        public const double minLatitude = 45.189725;
+        public const double maxLatitude= 45.328735;
+
+
+        private static  Dictionary<double, Model.Point> ExistingPoints = new Dictionary<double, Model.Point>();
 
         public XmlEntities xmlEntities { get; set; }
         public MainWindow()
         {
             InitializeComponent();
             this.xmlEntities = ParseXml();
+
+            //List<SwitchEntity> SortedList = xmlEntities.Switches.OrderBy(o => o.Latitude).ToList();
+            //double x = SortedList[0].Latitude;
+            //List<SubstationEntity> SortedList2 = xmlEntities.Substations.OrderBy(o => o.Latitude).ToList();
+            //double x2 = SortedList2[0].Latitude;
+
+            //List<NodeEntity> SortedList3 = xmlEntities.Nodes.OrderBy(o => o.Latitude).ToList();
+            //double x3 = SortedList3[0].Latitude;
+
         }
 
-        private void Load_Grid(object sender, RoutedEventArgs e)
+        private void Load_Grid(object sender, System.Windows.RoutedEventArgs e)
         {
+            List<Ellipse> elipses = new List<Ellipse>();
+
+            elipses = DrawSubstations(xmlEntities.Substations);
+            foreach (var item in elipses)
+            {
+                mapCanvas.Children.Add(item);
+            }
+            elipses = DrawNodes(xmlEntities.Nodes);
+            foreach (var item in elipses)
+            {
+                mapCanvas.Children.Add(item);
+            }
+            elipses = DrawSwitch(xmlEntities.Switches);
+            foreach (var item in elipses)
+            {
+                mapCanvas.Children.Add(item);
+            }
 
         }
+
+
+
+        public static List<Ellipse> DrawSubstations(List<SubstationEntity> substations)
+        {
+            List<Ellipse> subs = new List<Ellipse>();
+            foreach (var item in substations)
+            {
+                Ellipse elipse = createNewEllipse(Colors.DarkGreen);
+             
+                var point= CreatePoint(item.Longitude,item.Latitude) ;
+
+                elipse.SetValue(Canvas.LeftProperty, point.X);
+                elipse.SetValue(Canvas.TopProperty, point.Y );
+
+                elipse.ToolTip = "Substation: " + item.Name.ToString();
+                subs.Add(elipse);
+            }
+
+            return subs;
+        }
+
+        public static List<Ellipse> DrawNodes(List<NodeEntity> nodes)
+        {
+            List<Ellipse> subs = new List<Ellipse>();
+            foreach (var item in nodes)
+            {
+                Ellipse elipse = createNewEllipse(Colors.Blue);
+
+                var point = CreatePoint(item.Longitude, item.Latitude);
+
+                elipse.SetValue(Canvas.LeftProperty, point.X);
+                elipse.SetValue(Canvas.TopProperty, point.Y);
+
+                elipse.ToolTip = "Substation: " + item.Name.ToString();
+                subs.Add(elipse);
+            }
+
+            return subs;
+        }
+
+        public static List<Ellipse> DrawSwitch(List<SwitchEntity> switches)
+        {
+            List<Ellipse> subs = new List<Ellipse>();
+            foreach (var item in switches)
+            {
+                Ellipse elipse = createNewEllipse(Colors.Red);
+
+                var point = CreatePoint(item.Longitude, item.Latitude);
+
+                elipse.SetValue(Canvas.LeftProperty, point.X);
+                elipse.SetValue(Canvas.TopProperty, point.Y);
+
+                elipse.ToolTip = "Substation: " + item.Name.ToString();
+                subs.Add(elipse);
+            }
+
+            return subs;
+        }
+
+
+
+        private static Ellipse createNewEllipse(Color color)
+        {
+            Ellipse elipse = new Ellipse();
+            elipse.Height = 8;
+            elipse.Width = 8;
+            elipse.Fill = new SolidColorBrush(color);
+            elipse.StrokeThickness = 2;
+
+            return elipse;
+        }
+
+
+
+
+       
+     
+        private static Model.Point CreatePoint(double longitude, double latitude)
+        {
+            double ValueoOfOneLongitude=(maxLongitude - minLongitude) / 1400; //pravimo 1400delova (Longituda) jer nam je canvas 1500x1500 
+            double ValueoOfOneLatitude = (maxLatitude - minLatitude) / 1400;  //isto kao gore
+
+            double x = (longitude - minLongitude) / ValueoOfOneLongitude; // koliko longituda stane u rastojanje izmedju trenutne i minimalne longitude
+            double y = (latitude-minLatitude) / ValueoOfOneLatitude;     
+            return new Model.Point
+            {
+                X = x,
+                Y = y,
+            };
+        }
+
+
+
+
+
+
 
 
         public static XmlEntities ParseXml()

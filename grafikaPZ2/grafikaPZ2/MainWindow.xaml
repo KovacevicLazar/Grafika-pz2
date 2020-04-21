@@ -7,11 +7,12 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <DockPanel>
-        <Slider x:Name="ZoomSlider" Maximum="10" Minimum="1" DockPanel.Dock="Top" Height="21"/>
+
+        <Slider x:Name="ZoomSlider" Maximum="10" Minimum="0" DockPanel.Dock="Top" TickPlacement="BottomRight" TickFrequency="1" IsSnapToTickEnabled="True" Margin="10,5,663,0" Height="24"  />
         <Grid Loaded="Load_Grid">
-          
+           
             <ScrollViewer  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <Canvas  Name="Map" Height="1843" Width="2000" >
+                <Canvas  Name="mapCanvas" Height="1500" Width="1500" >
                     <Canvas.Background>
                         <DrawingBrush TileMode="Tile" Viewport="0,0,10,10" ViewportUnits="Absolute">
                             <DrawingBrush.Drawing>
