@@ -35,7 +35,7 @@ namespace grafikaPZ2
         public const double maxLatitude= 45.328735;
 
 
-        private static  Dictionary<double, Model.Point> ExistingPoints = new Dictionary<double, Model.Point>();
+        private static  Dictionary<long, Model.Point> ExistingPoints = new Dictionary<long, Model.Point>();
 
         public XmlEntities xmlEntities { get; set; }
         public MainWindow()
@@ -82,9 +82,16 @@ namespace grafikaPZ2
             List<Ellipse> subs = new List<Ellipse>();
             foreach (var item in substations)
             {
+                if (ExistingPoints.ContainsKey(item.Id))
+                {
+                    continue;
+                }
+
                 Ellipse elipse = createNewEllipse(Colors.DarkGreen);
              
                 var point= CreatePoint(item.Longitude,item.Latitude) ;
+
+                ExistingPoints.Add(item.Id, point);
 
                 elipse.SetValue(Canvas.LeftProperty, point.X);
                 elipse.SetValue(Canvas.TopProperty, point.Y );
@@ -101,14 +108,20 @@ namespace grafikaPZ2
             List<Ellipse> subs = new List<Ellipse>();
             foreach (var item in nodes)
             {
+                if (ExistingPoints.ContainsKey(item.Id))
+                {
+                    continue;
+                }
                 Ellipse elipse = createNewEllipse(Colors.Blue);
 
                 var point = CreatePoint(item.Longitude, item.Latitude);
 
+                ExistingPoints.Add(item.Id, point);
+
                 elipse.SetValue(Canvas.LeftProperty, point.X);
                 elipse.SetValue(Canvas.TopProperty, point.Y);
 
-                elipse.ToolTip = "Substation: " + item.Name.ToString();
+                elipse.ToolTip = "Node: " + item.Name.ToString();
                 subs.Add(elipse);
             }
 
@@ -120,14 +133,20 @@ namespace grafikaPZ2
             List<Ellipse> subs = new List<Ellipse>();
             foreach (var item in switches)
             {
+                if (ExistingPoints.ContainsKey(item.Id))
+                {
+                    continue;
+                }
                 Ellipse elipse = createNewEllipse(Colors.Red);
 
                 var point = CreatePoint(item.Longitude, item.Latitude);
 
+                ExistingPoints.Add(item.Id, point);
+
                 elipse.SetValue(Canvas.LeftProperty, point.X);
                 elipse.SetValue(Canvas.TopProperty, point.Y);
 
-                elipse.ToolTip = "Substation: " + item.Name.ToString();
+                elipse.ToolTip = "Switch: " + item.Name.ToString();
                 subs.Add(elipse);
             }
 
@@ -139,10 +158,10 @@ namespace grafikaPZ2
         private static Ellipse createNewEllipse(Color color)
         {
             Ellipse elipse = new Ellipse();
-            elipse.Height = 8;
-            elipse.Width = 8;
+            elipse.Height = 10;
+            elipse.Width = 10;
             elipse.Fill = new SolidColorBrush(color);
-            elipse.StrokeThickness = 2;
+            elipse.StrokeThickness = 1;
 
             return elipse;
         }
@@ -154,11 +173,82 @@ namespace grafikaPZ2
      
         private static Model.Point CreatePoint(double longitude, double latitude)
         {
-            double ValueoOfOneLongitude=(maxLongitude - minLongitude) / 1400; //pravimo 1400delova (Longituda) jer nam je canvas 1500x1500 
-            double ValueoOfOneLatitude = (maxLatitude - minLatitude) / 1400;  //isto kao gore
+            double ValueoOfOneLongitude=(maxLongitude - minLongitude) / 2100; //pravimo 1400delova (Longituda) jer nam je canvas 1500x1500 
+            double ValueoOfOneLatitude = (maxLatitude - minLatitude) / 2100;  //isto kao gore
 
-            double x = (longitude - minLongitude) / ValueoOfOneLongitude; // koliko longituda stane u rastojanje izmedju trenutne i minimalne longitude
-            double y = (latitude-minLatitude) / ValueoOfOneLatitude;     
+            double x =Math.Round((longitude - minLongitude) / ValueoOfOneLongitude); // koliko longituda stane u rastojanje izmedju trenutne i minimalne longitude
+            double y =Math.Round((latitude - minLatitude) / ValueoOfOneLatitude);
+       
+            x = x - x % 10;
+            y = y - y % 10;
+
+            int cout = 0;
+            
+                while(true)
+                {
+                    if (ExistingPoints.Any(z => z.Value.X == x && z.Value.Y == y))
+                    {
+                        if ( cout == 0)
+                        {
+                            x += 10;
+                            cout++;
+                            continue;
+                        }
+                        else if (cout == 1)
+                        {
+                            x -= 20;
+                            cout++;
+                            continue;
+                        }
+                        else if ( cout == 2)
+                        {
+                            x += 10; //vraxamo x na pocetnu vrednost
+                            y += 10;
+                            cout++;
+                            continue;
+                        }
+                        else if ( cout == 3)
+                        {
+                            y -= 20;
+                            cout++;
+                            continue;
+                        }
+                        else if ( cout == 4)
+                        {
+                            x += 10;
+                            cout++;
+                            continue;
+                        }
+                        else if ( cout == 5)
+                        {
+                            x -= 20;
+                            cout++;
+                            continue;
+                        }
+                        else if ( cout == 6)
+                        {
+                            y += 20;
+                            cout++;
+                            continue;
+                        }
+                        else if ( cout == 6)
+                        {
+                            x += 20;
+                            cout++;
+                            continue;
+                        }
+                        else
+                        {
+                             cout = 0;
+                            continue;
+                        }
+                    } 
+                    else
+                    {
+                        break;
+                    }
+                }
+
             return new Model.Point
             {
                 X = x,
