@@ -10,6 +10,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
@@ -42,7 +43,7 @@ namespace grafikaPZ2
         {
             InitializeComponent();
             this.xmlEntities = ParseXml();
-
+          
             //List<SwitchEntity> SortedList = xmlEntities.Switches.OrderBy(o => o.Latitude).ToList();
             //double x = SortedList[0].Latitude;
             //List<SubstationEntity> SortedList2 = xmlEntities.Substations.OrderBy(o => o.Latitude).ToList();
@@ -96,7 +97,7 @@ namespace grafikaPZ2
                 elipse.SetValue(Canvas.LeftProperty, point.X);
                 elipse.SetValue(Canvas.TopProperty, point.Y );
 
-                elipse.ToolTip = "Substation: " + item.Name.ToString();
+                elipse.ToolTip = "\tSubstation\nID: " + item.Id.ToString()+ "\nName:"+ item.Name;
                 subs.Add(elipse);
             }
 
@@ -121,7 +122,7 @@ namespace grafikaPZ2
                 elipse.SetValue(Canvas.LeftProperty, point.X);
                 elipse.SetValue(Canvas.TopProperty, point.Y);
 
-                elipse.ToolTip = "Node: " + item.Name.ToString();
+                elipse.ToolTip = "\tNode\nID: " + item.Id.ToString()+ "\nName: " + item.Name;
                 subs.Add(elipse);
             }
 
@@ -146,7 +147,7 @@ namespace grafikaPZ2
                 elipse.SetValue(Canvas.LeftProperty, point.X);
                 elipse.SetValue(Canvas.TopProperty, point.Y);
 
-                elipse.ToolTip = "Switch: " + item.Name.ToString();
+                elipse.ToolTip = "\tSwitch \nID: " + item.Id.ToString() + "\nName: " + item.Name + "\nStatus: " + item.Status;
                 subs.Add(elipse);
             }
 
@@ -162,20 +163,64 @@ namespace grafikaPZ2
             elipse.Width = 10;
             elipse.Fill = new SolidColorBrush(color);
             elipse.StrokeThickness = 1;
+            
 
             return elipse;
         }
 
+        private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            Shape clickedShape = e.OriginalSource as Shape;
+
+            if (clickedShape != null)
+            {
+                DoubleAnimation widthAnimation = new DoubleAnimation
+                {
+                    From = 10,
+                    To = 100,
+                    Duration = TimeSpan.FromSeconds(1.5)
+                };
+
+                DoubleAnimation heightAnimation = new DoubleAnimation
+                {
+                    From = 10,
+                    To = 100,
+                    Duration = TimeSpan.FromSeconds(1.5)
+                };
+
+                Storyboard.SetTargetProperty(widthAnimation, new PropertyPath(Ellipse.WidthProperty));
+                Storyboard.SetTarget(widthAnimation, clickedShape);
+
+                Storyboard.SetTargetProperty(heightAnimation, new PropertyPath(Ellipse.HeightProperty));
+                Storyboard.SetTarget(heightAnimation, clickedShape);
+
+                Storyboard s = new Storyboard();
+                s.Children.Add(widthAnimation);
+                s.Children.Add(heightAnimation);
+
+                s.Completed += (t,r) => StoryboardCompleted(clickedShape);
+                s.Begin();
+
+            }
+
+        }
+        private void StoryboardCompleted(Shape e)
+        {
+            DoubleAnimation myDoubleAnimation2 = new DoubleAnimation();
+            myDoubleAnimation2.From =100;
+            myDoubleAnimation2.To = 10;
+            myDoubleAnimation2.Duration = new Duration(TimeSpan.FromSeconds(1.5));
+            e.BeginAnimation(Ellipse.WidthProperty, myDoubleAnimation2);
+            e.BeginAnimation(Ellipse.HeightProperty, myDoubleAnimation2);
+        }
 
 
 
-       
-     
         private static Model.Point CreatePoint(double longitude, double latitude)
         {
-            double ValueoOfOneLongitude=(maxLongitude - minLongitude) / 2100; //pravimo 1400delova (Longituda) jer nam je canvas 1500x1500 
-            double ValueoOfOneLatitude = (maxLatitude - minLatitude) / 2100;  //isto kao gore
-
+            double ValueoOfOneLongitude=(maxLongitude - minLongitude) / 2200; //pravimo 2200delova (Longituda) jer nam je canvas 2200x2200 
+            double ValueoOfOneLatitude = (maxLatitude - minLatitude) / 2200;  //isto kao gore
+    
             double x =Math.Round((longitude - minLongitude) / ValueoOfOneLongitude); // koliko longituda stane u rastojanje izmedju trenutne i minimalne longitude
             double y =Math.Round((latitude - minLatitude) / ValueoOfOneLatitude);
        

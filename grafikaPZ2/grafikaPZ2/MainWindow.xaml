@@ -5,28 +5,29 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:grafikaPZ2"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="PowerGrid"
+        WindowState="Maximized">
     <DockPanel>
+        <Grid DockPanel.Dock="Top" Height="33" Margin="0,0,-0.4,0">
+            <Label Margin="15,3,695,0" Content="ZOOM:" FontWeight="Bold"/>
+            <Slider x:Name="ZoomSlider" Maximum="2" Value="1.25" Minimum=".5" DockPanel.Dock="Top" Margin="67,6,502,0"  />
+        </Grid>
 
-        <Slider x:Name="ZoomSlider" Maximum="10" Minimum="0" DockPanel.Dock="Top" TickPlacement="BottomRight" TickFrequency="1" IsSnapToTickEnabled="True" Margin="10,5,663,0" Height="24"  />
         <Grid Loaded="Load_Grid">
-           
-            <ScrollViewer  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <Canvas  Name="mapCanvas" Height="2100" Width="2100" >
-                    <Canvas.Background>
-                        <DrawingBrush TileMode="Tile" Viewport="0,0,10,10" ViewportUnits="Absolute">
-                            <DrawingBrush.Drawing>
-                                <GeometryDrawing>
-                                    <GeometryDrawing.Geometry>
-                                        <RectangleGeometry Rect="0,0,65,65"/>
-                                    </GeometryDrawing.Geometry>
-                                </GeometryDrawing>
-                            </DrawingBrush.Drawing>
-                        </DrawingBrush>
-                    </Canvas.Background>
+            <!--<Grid.ColumnDefinitions>
+                <ColumnDefinition Width="8*"/>
+                <ColumnDefinition Width="2200*"/>
+            </Grid.ColumnDefinitions>-->
+
+            <ScrollViewer  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="2" Margin="0,0,-0.4,0">
+                <Canvas  Name="mapCanvas" Height="2200" Width="2200" MouseLeftButtonDown="Canvas_MouseLeftButtonDown">
+                    <Canvas.LayoutTransform>
+                        <ScaleTransform ScaleX="{Binding ElementName=ZoomSlider, Path=Value}"
+                                     ScaleY="{Binding ElementName=ZoomSlider, Path=Value}"/>
+                    </Canvas.LayoutTransform>
                 </Canvas>
             </ScrollViewer>
         </Grid>
     </DockPanel>
-    
+
 </Window>
