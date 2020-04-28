@@ -27,6 +27,10 @@ namespace grafikaPZ2
    
     public partial class MainWindow : Window
     {
+        enum LineType{
+            Verical,
+            Horizontal,
+        }
 
 
         public const double minLongitude = 19.727275;
@@ -37,6 +41,8 @@ namespace grafikaPZ2
 
 
         private static  Dictionary<long, Model.Point> ExistingPoints = new Dictionary<long, Model.Point>();
+
+        private static Dictionary<Model.Point, LineType> LineOnPoint = new Dictionary<Model.Point, LineType>();
 
         public XmlEntities xmlEntities { get; set; }
         public MainWindow()
@@ -73,6 +79,7 @@ namespace grafikaPZ2
             {
                 mapCanvas.Children.Add(item);
             }
+            DrawLines(xmlEntities.Lines, mapCanvas);
 
         }
 
@@ -154,17 +161,191 @@ namespace grafikaPZ2
             return subs;
         }
 
+        public static void DrawLines(List<Model.LineEntity> lines,Canvas canvas)
+        {
+            foreach (var item in lines)
+            {
+                if (!ExistingPoints.ContainsKey(item.FirstEnd) || !ExistingPoints.ContainsKey(item.SecondEnd))
+                {
+                    continue;
+                }
 
+                List<Model.Point> path = GetPointsForLine(ExistingPoints[item.FirstEnd],ExistingPoints[item.SecondEnd],canvas);
+
+            }
+        }
+        public static List<Model.Point> GetPointsForLine(Model.Point startNode,Model.Point EndNode, Canvas canvas)
+        {
+            List<Model.Point> points = new List<Model.Point>();
+            Model.Point currPoint = new Model.Point();
+            Model.Point prevPoint = new Model.Point();
+            prevPoint.X =currPoint.X= startNode.X;
+            prevPoint.Y =currPoint.Y= startNode.Y;
+            
+            int step =(currPoint.X > EndNode.X) ? -10 : 10;
+            while (currPoint.X != EndNode.X+step)
+            {
+
+                if (LineOnPoint.ContainsKey(currPoint))
+                {
+                    if (LineOnPoint[currPoint] == LineType.Horizontal)
+                    {
+                        prevPoint.X = currPoint.X;
+                        currPoint.X += step;
+                        continue;
+                    }
+                    else if (LineOnPoint[currPoint] == LineType.Verical)
+                    {
+                        //treba dodati tacku preseka na ovoj tacki
+                        Rectangle rectangle = new Rectangle();
+                        rectangle.Height = rectangle.Width = 3;
+                        rectangle.Fill = Brushes.Yellow;
+                        rectangle.SetValue(Canvas.TopProperty, currPoint.X);
+                        rectangle.SetValue(Canvas.LeftProperty, currPoint.Y);
+                        Line l = new Line();
+                        l.Stroke = Brushes.DeepSkyBlue;
+                        l.X1 = prevPoint.X + 4.5;
+                        l.Y1 = prevPoint.Y + 4.5;
+
+                        l.X2 = currPoint.X + 4.5;
+                        l.Y2 = currPoint.Y + 4.5;
+                        l.StrokeThickness = 1.5;
+
+                        canvas.Children.Add(l);
+
+                        points.Add(currPoint);
+                        LineOnPoint.Add(currPoint, LineType.Horizontal);
+                    }
+                }
+                else
+                {
+                    Line l = new Line();
+                    l.Stroke = Brushes.DeepSkyBlue;
+                    l.X1 = prevPoint.X + 4.5;
+                    l.Y1 = prevPoint.Y + 4.5;
+
+                    l.X2 = currPoint.X + 4.5;
+                    l.Y2 = currPoint.Y + 4.5;
+                    l.StrokeThickness = 1.5;
+
+                    canvas.Children.Add(l);
+
+                    points.Add(currPoint);
+                   
+                }
+              
+                prevPoint.X = currPoint.X;
+                currPoint.X += step;
+            }
+
+            prevPoint.X = currPoint.X;
+            step = (currPoint.Y > EndNode.Y) ? -10 : 10;
+
+            while (currPoint.Y != EndNode.Y+step)
+            {
+                if (LineOnPoint.ContainsKey(currPoint))
+                {
+                    if (LineOnPoint[currPoint] == LineType.Verical)
+                    {
+                        prevPoint.Y = currPoint.Y;
+                        currPoint.Y += step;
+                        continue;
+                    }
+                    else if (LineOnPoint[currPoint] == LineType.Horizontal)
+                    {
+                        Rectangle rectangle = new Rectangle();
+                        rectangle.Height = rectangle.Width = 3;
+                        rectangle.Fill = Brushes.Yellow;
+                        rectangle.SetValue(Canvas.TopProperty, currPoint.X);
+                        rectangle.SetValue(Canvas.LeftProperty, currPoint.Y);
+                        Line l = new Line();
+                        l.Stroke = Brushes.Gray;
+                        l.X1 = prevPoint.X + 4.5;
+                        l.Y1 = prevPoint.Y + 4.5;
+                         
+                        l.X2 = currPoint.X + 4.5;
+                        l.Y2 = currPoint.Y + 4.5;
+                        l.StrokeThickness = 1.5;
+
+                        canvas.Children.Add(l);
+
+                        points.Add(currPoint);
+                        
+                    }
+                }
+                else
+                {
+                    Line l = new Line();
+                    l.Stroke = Brushes.Gray;
+                    l.X1 = prevPoint.X + 4.5;
+                    l.Y1 = prevPoint.Y + 4.5;
+
+                    l.X2 = currPoint.X + 4.5;
+                    l.Y2 = currPoint.Y + 4.5;
+                    l.StrokeThickness = 1.5;
+
+                    canvas.Children.Add(l);
+
+                    points.Add(currPoint);
+                    LineOnPoint.Add(currPoint, LineType.Horizontal);
+                }
+
+                prevPoint.Y= currPoint.Y;
+                currPoint.Y += step;
+
+                
+            }
+            return points;
+
+
+
+
+
+            //List<Model.Point> points = new List<Model.Point>();
+            //Model.Point currPoint = new Model.Point();
+            //Model.Point prevPoint = new Model.Point();
+            //prevPoint.X = currPoint.X = startNode.X;
+            //prevPoint.Y = currPoint.Y = startNode.Y;
+
+            //int step = (currPoint.X > EndNode.X) ? -10 : 10;
+            //while (currPoint.X != EndNode.X)
+            //{
+
+
+            //    prevPoint.X = currPoint.X;
+            //    currPoint.X += step;
+            //}
+            //Line l = new Line();
+            //l.Stroke = Brushes.DeepSkyBlue;
+            //l.X1 = startNode.X + 5;
+            //l.Y1 = startNode.Y + 5;
+
+            //l.X2 = currPoint.X + 5;
+            //l.Y2 = currPoint.Y + 5;
+            //l.StrokeThickness = 2;
+
+            //canvas.Children.Add(l);
+
+            //Line l2 = new Line();
+            //l2.Stroke = Brushes.DeepSkyBlue;
+            //l2.X1 = EndNode.X + 5;
+            //l2.Y1 = EndNode.Y + 5;
+
+            //l2.X2 = currPoint.X + 5;
+            //l2.Y2 = currPoint.Y + 5;
+            //l2.StrokeThickness = 2;
+
+            //canvas.Children.Add(l2);
+            //return points;
+        }
 
         private static Ellipse createNewEllipse(Color color)
         {
             Ellipse elipse = new Ellipse();
-            elipse.Height = 10;
-            elipse.Width = 10;
+            elipse.Height = 9;
+            elipse.Width = 9;
             elipse.Fill = new SolidColorBrush(color);
-            elipse.StrokeThickness = 1;
             
-
             return elipse;
         }
 
@@ -172,21 +353,23 @@ namespace grafikaPZ2
         {
             Shape clickedShape = e.OriginalSource as Shape;
 
-            if (clickedShape != null)
+            if (clickedShape != null && clickedShape.GetType().Name.ToString()!="Line")
             {
                 DoubleAnimation widthAnimation = new DoubleAnimation
                 {
-                    From = 10,
-                    To = 100,
+                    From = 9,
+                    To = 90,
                     Duration = TimeSpan.FromSeconds(1.5)
                 };
 
                 DoubleAnimation heightAnimation = new DoubleAnimation
                 {
-                    From = 10,
-                    To = 100,
+                    From = 9,
+                    To = 90,
                     Duration = TimeSpan.FromSeconds(1.5)
                 };
+                mapCanvas.Children.Remove(clickedShape);
+                mapCanvas.Children.Add(clickedShape);
 
                 Storyboard.SetTargetProperty(widthAnimation, new PropertyPath(Ellipse.WidthProperty));
                 Storyboard.SetTarget(widthAnimation, clickedShape);
@@ -207,8 +390,8 @@ namespace grafikaPZ2
         private void StoryboardCompleted(Shape e)
         {
             DoubleAnimation myDoubleAnimation2 = new DoubleAnimation();
-            myDoubleAnimation2.From =100;
-            myDoubleAnimation2.To = 10;
+            myDoubleAnimation2.From =90;
+            myDoubleAnimation2.To = 9;
             myDoubleAnimation2.Duration = new Duration(TimeSpan.FromSeconds(1.5));
             e.BeginAnimation(Ellipse.WidthProperty, myDoubleAnimation2);
             e.BeginAnimation(Ellipse.HeightProperty, myDoubleAnimation2);
