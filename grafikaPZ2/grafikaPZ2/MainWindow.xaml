@@ -8,17 +8,15 @@
         Title="PowerGrid"
         WindowState="Maximized">
     <DockPanel>
-        <Grid DockPanel.Dock="Top" Height="33" Margin="0,0,-0.4,0">
-            <Label Margin="15,3,695,0" Content="ZOOM:" FontWeight="Bold"/>
-            <Slider x:Name="ZoomSlider" Maximum="2" Value="1.25" Minimum=".5" DockPanel.Dock="Top" Margin="67,6,502,0"  />
+        <Grid DockPanel.Dock="Top" Height="41" Margin="0,0,-0.4,0" Background="#30a141">
+            <Label Margin="354,5,356,6" Content="ZOOM:" FontWeight="Bold"/>
+            <Slider x:Name="ZoomSlider" Maximum="2" Value="1.25" Minimum=".5" DockPanel.Dock="Top" Margin="406,10,167,6"  />
+            <Button x:Name="LoadButton" Content="Load Grid" HorizontalAlignment="Left" FontWeight="Bold" Margin="10,5,0,0" VerticalAlignment="Top" Width="164" Height="30" Click="Load_Grid"/>
+            <ProgressBar x:Name="progressBar" HorizontalAlignment="Left" Height="30" Margin="179,5,0,0" VerticalAlignment="Top" Width="170" Minimum="0" Maximum="100"/>
+            <TextBlock  x:Name="progressText" TextAlignment="Center" HorizontalAlignment="Left" Margin="179,11,0,0" VerticalAlignment="Top" FontWeight="Bold"  TextWrapping="Wrap" Width="170" Height="29"/>
         </Grid>
 
-        <Grid Loaded="Load_Grid">
-            <!--<Grid.ColumnDefinitions>
-                <ColumnDefinition Width="8*"/>
-                <ColumnDefinition Width="2200*"/>
-            </Grid.ColumnDefinitions>-->
-
+        <Grid>
             <ScrollViewer  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="2" Margin="0,0,-0.4,0">
                 <Canvas  Name="mapCanvas" Height="2200" Width="2200" MouseLeftButtonDown="Canvas_MouseLeftButtonDown">
                     <Canvas.LayoutTransform>

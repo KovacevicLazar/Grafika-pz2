@@ -8,12 +8,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using System.Xml;
 using System.Xml.Linq;
 using grafikaPZ2.Model;
@@ -25,7 +27,7 @@ namespace grafikaPZ2
     /// </summary>
     /// 
 
-    public struct Point
+    public struct Point  // struktura...koristim kao kljuc u recniku (dictionari)
     {
         public double x;
         public double y;
@@ -50,61 +52,82 @@ namespace grafikaPZ2
         public const double minLatitude = 45.189725;
         public const double maxLatitude= 45.328735;
 
+                                   //id, point Kolekcija svih cvorova sa kanvasu
+        private static  Dictionary<long, Model.Point> collectionOfNodes = new Dictionary<long, Model.Point>();
 
-        private static  Dictionary<long, Model.Point> ExistingPoints = new Dictionary<long, Model.Point>();
 
+        //koristim za presek horizontalnih i vertikalnih linija, i ukoliko vod na zadatom mestu postoji, da se ne crta ponovo ->
         private static Dictionary<Point, LineType> horizontalLineOnPoint = new Dictionary<Point, LineType>();
         private static Dictionary<Point, LineType> verticalLineOnPoint = new Dictionary<Point, LineType>();
-
-        private static List<Model.Point> tackePreseka = new List<Model.Point>(); 
-
         public XmlEntities xmlEntities { get; set; }
+
+
         public MainWindow()
         {
             InitializeComponent();
             this.xmlEntities = ParseXml();
-          
-            //List<SwitchEntity> SortedList = xmlEntities.Switches.OrderBy(o => o.Latitude).ToList();
-            //double x = SortedList[0].Latitude;
-            //List<SubstationEntity> SortedList2 = xmlEntities.Substations.OrderBy(o => o.Latitude).ToList();
-            //double x2 = SortedList2[0].Latitude;
-
-            //List<NodeEntity> SortedList3 = xmlEntities.Nodes.OrderBy(o => o.Latitude).ToList();
-            //double x3 = SortedList3[0].Latitude;
-
         }
 
         private void Load_Grid(object sender, System.Windows.RoutedEventArgs e)
         {
-            List<Ellipse> elipses = new List<Ellipse>();
 
-            elipses = DrawSubstations(xmlEntities.Substations);
-            foreach (var item in elipses)
+            LoadButton.IsEnabled = false;
+
+            progressBar.Dispatcher.Invoke(() => progressBar.Value = 10, DispatcherPriority.Background);
+            progressText.Text = "10 %";
+
+            List<Ellipse> ellipses = new List<Ellipse>();
+
+            ellipses = DrawSubstations(xmlEntities.Substations);
+            foreach (var item in ellipses)
+            {
+                mapCanvas.Children.Add(item);
+            } 
+           
+            progressBar.Dispatcher.Invoke(() => progressBar.Value = 30, DispatcherPriority.Background);
+            progressText.Text = "30 %";
+
+            ellipses = DrawNodes(xmlEntities.Nodes);
+            foreach (var item in ellipses)
             {
                 mapCanvas.Children.Add(item);
             }
-            elipses = DrawNodes(xmlEntities.Nodes);
-            foreach (var item in elipses)
+
+            progressBar.Dispatcher.Invoke(() => progressBar.Value = 60, DispatcherPriority.Background);
+            progressText.Text = "70 %";
+
+
+            ellipses = DrawSwitch(xmlEntities.Switches);
+            foreach (var item in ellipses)
             {
                 mapCanvas.Children.Add(item);
             }
-            elipses = DrawSwitch(xmlEntities.Switches);
-            foreach (var item in elipses)
-            {
-                mapCanvas.Children.Add(item);
-            }
+
+            progressBar.Dispatcher.Invoke(() => progressBar.Value = 80, DispatcherPriority.Background);
+            progressText.Text = "80 %";
+
             DrawLines(xmlEntities.Lines, mapCanvas);
 
-            foreach(var point in tackePreseka)
+            //Oznacavanje preseka vodova ->
+            foreach(var point in horizontalLineOnPoint.Keys)
             {
-                Rectangle rectangle = new Rectangle();
-                rectangle.Height = 4;
-                rectangle.Width = 4;
-                rectangle.Fill = new SolidColorBrush(Colors.Black);
-                rectangle.SetValue(Canvas.LeftProperty, point.X + 3);
-                rectangle.SetValue(Canvas.TopProperty, point.Y + 3);
-                mapCanvas.Children.Add(rectangle);
+                int step = 10;
+
+                if (verticalLineOnPoint.ContainsKey(new Point(point.x, point.y)))
+                {
+                    Rectangle rectangle = new Rectangle();
+                    rectangle.Height = 3;
+                    rectangle.Width = 3;
+                    rectangle.Fill = new SolidColorBrush(Color.FromRgb(66, 65, 11));
+                    rectangle.SetValue(Canvas.LeftProperty, point.x + 3);
+                    rectangle.SetValue(Canvas.TopProperty, point.y + 3);
+                    mapCanvas.Children.Add(rectangle);
+
+                }
             }
+
+            progressBar.Dispatcher.Invoke(() => progressBar.Value = 100, DispatcherPriority.Background);
+            progressText.Text = "100%";
 
         }
 
@@ -112,169 +135,152 @@ namespace grafikaPZ2
 
         public static List<Ellipse> DrawSubstations(List<SubstationEntity> substations)
         {
-            List<Ellipse> subs = new List<Ellipse>();
+            List<Ellipse> substationEllipses = new List<Ellipse>();
             foreach (var item in substations)
             {
-                if (ExistingPoints.ContainsKey(item.Id))
+                if (collectionOfNodes.ContainsKey(item.Id))
                 {
                     continue;
                 }
 
-                Ellipse elipse = createNewEllipse(Colors.DarkGreen);
-             
-                var point= CreatePoint(item.Longitude,item.Latitude) ;
+                Ellipse ellipse = createNewEllipse(Color.FromRgb(94, 181, 54));
 
-                ExistingPoints.Add(item.Id, point);
+                var point= CreatePoint(item.Longitude,item.Latitude);
 
-                elipse.SetValue(Canvas.LeftProperty, point.X);
-                elipse.SetValue(Canvas.TopProperty, point.Y );
+                ellipse.SetValue(Canvas.LeftProperty, point.X);
+                ellipse.SetValue(Canvas.TopProperty, point.Y);
+                ellipse.ToolTip = "\tSUBSTATION\nID: " + item.Id.ToString() + "\nName:" + item.Name;
 
-                elipse.ToolTip = "\tSubstation\nID: " + item.Id.ToString()+ "\nName:"+ item.Name;
-                subs.Add(elipse);
+                substationEllipses.Add(ellipse);
+                collectionOfNodes.Add(item.Id, point);
             }
-
-            return subs;
+            return substationEllipses;
         }
 
         public static List<Ellipse> DrawNodes(List<NodeEntity> nodes)
         {
-            List<Ellipse> subs = new List<Ellipse>();
+            List<Ellipse> nodeEllipses = new List<Ellipse>();
             foreach (var item in nodes)
             {
-                if (ExistingPoints.ContainsKey(item.Id))
+                if (collectionOfNodes.ContainsKey(item.Id))
                 {
                     continue;
                 }
-                Ellipse elipse = createNewEllipse(Colors.Blue);
+                Ellipse elipse = createNewEllipse(Color.FromRgb(54, 175, 181));
 
                 var point = CreatePoint(item.Longitude, item.Latitude);
 
-                ExistingPoints.Add(item.Id, point);
-
                 elipse.SetValue(Canvas.LeftProperty, point.X);
                 elipse.SetValue(Canvas.TopProperty, point.Y);
+                elipse.ToolTip = "\tNODE\nID: " + item.Id.ToString() + "\nName: " + item.Name;
 
-                elipse.ToolTip = "\tNode\nID: " + item.Id.ToString()+ "\nName: " + item.Name;
-                subs.Add(elipse);
+                collectionOfNodes.Add(item.Id, point);
+                nodeEllipses.Add(elipse);
             }
 
-            return subs;
+            return nodeEllipses;
         }
 
         public static List<Ellipse> DrawSwitch(List<SwitchEntity> switches)
         {
-            List<Ellipse> subs = new List<Ellipse>();
+            List<Ellipse> switchEllipss = new List<Ellipse>();
             foreach (var item in switches)
             {
-                if (ExistingPoints.ContainsKey(item.Id))
+                if (collectionOfNodes.ContainsKey(item.Id))
                 {
                     continue;
                 }
-                Ellipse elipse = createNewEllipse(Colors.Red);
+                Ellipse elipse = createNewEllipse(Color.FromRgb(141, 54, 181));
 
                 var point = CreatePoint(item.Longitude, item.Latitude);
 
-                ExistingPoints.Add(item.Id, point);
-
                 elipse.SetValue(Canvas.LeftProperty, point.X);
                 elipse.SetValue(Canvas.TopProperty, point.Y);
+                elipse.ToolTip = "\tSWITCH \nID: " + item.Id.ToString() + "\nName: " + item.Name + "\nStatus: " + item.Status;
 
-                elipse.ToolTip = "\tSwitch \nID: " + item.Id.ToString() + "\nName: " + item.Name + "\nStatus: " + item.Status;
-                subs.Add(elipse);
+                collectionOfNodes.Add(item.Id, point);
+                switchEllipss.Add(elipse);
             }
-
-            return subs;
+            return switchEllipss;
         }
 
         public static void DrawLines(List<Model.LineEntity> lines,Canvas canvas)
         {
+            Model.Point startNode = new Model.Point();
+            Model.Point EndNode = new Model.Point();
+
+            Model.Point currPoint = new Model.Point();
+            Model.Point prevPoint = new Model.Point();
+            
             foreach (var item in lines)
             {
-                if (!ExistingPoints.ContainsKey(item.FirstEnd) || !ExistingPoints.ContainsKey(item.SecondEnd))
+                if (!collectionOfNodes.ContainsKey(item.FirstEnd) || !collectionOfNodes.ContainsKey(item.SecondEnd))
                 {
                     continue;
                 }
 
-                List<Model.Point> path = GetPointsForLine(ExistingPoints[item.FirstEnd],ExistingPoints[item.SecondEnd],canvas);
+                startNode = collectionOfNodes[item.FirstEnd];
+                EndNode = collectionOfNodes[item.SecondEnd];
 
+                prevPoint.X = currPoint.X = startNode.X;
+                prevPoint.Y = currPoint.Y = startNode.Y;
+
+                int step = (currPoint.X > EndNode.X) ? -10 : 10; // razmak izmedju dva x-a na gridu je 10, zbog toga i korak -10 ili +10
+
+                while (currPoint.X != EndNode.X) //crtamo po x
+                {
+                    currPoint.X += step;
+                    if (!horizontalLineOnPoint.ContainsKey(new Point(currPoint.X, currPoint.Y)) || currPoint.X == EndNode.X)
+                    {
+                        Line l1 = createLine(prevPoint, currPoint);
+                        l1.ToolTip= "\tLINE \nID: " + item.Id.ToString() + "\nName: " + item.Name + "\nFirstEnd: " + item.FirstEnd.ToString() + "\nSecondEnd: " + item.SecondEnd.ToString();
+                        canvas.Children.Add(l1);
+                        horizontalLineOnPoint[new Point(currPoint.X, currPoint.Y)] = LineType.Horizontal;
+                    }
+                    prevPoint.X = currPoint.X;
+                }
+
+                step = (currPoint.Y > EndNode.Y) ? -10 : 10; // razmak izmedju dva y-a na gridu je 10, zbog toga i korak -10 ili +10
+                while (currPoint.Y != EndNode.Y) //crtamo po y
+                {
+                    currPoint.Y += step;
+                    if (!verticalLineOnPoint.ContainsKey(new Point(currPoint.X, currPoint.Y)) || currPoint.Y == EndNode.Y)
+                    {
+                        Line l1 = createLine(prevPoint, currPoint);
+                        l1.ToolTip = "\tLINE \nID: " + item.Id.ToString() + "\nName: " + item.Name + "\nFirstEnd: " + item.FirstEnd.ToString() + "\nSecondEnd: " + item.SecondEnd.ToString();
+                        canvas.Children.Add(l1);
+                        verticalLineOnPoint[new Point(currPoint.X, currPoint.Y)] = LineType.Verical;
+                    }
+                    prevPoint.Y = currPoint.Y;
+
+                }
             }
         }
-        public static List<Model.Point> GetPointsForLine(Model.Point startNode,Model.Point EndNode, Canvas canvas)
+
+       
+        private static Line createLine( Model.Point point1, Model.Point point2)
         {
-            
-            List<Model.Point> points = new List<Model.Point>();
-            Model.Point currPoint = new Model.Point();
-            Model.Point prevPoint = new Model.Point();
-            prevPoint.X = currPoint.X = startNode.X;
-            prevPoint.Y = currPoint.Y = startNode.Y;
+            Line line = new Line();
+            line.Stroke = new SolidColorBrush(Color.FromRgb(71, 252, 58));
 
-            int step = (currPoint.X > EndNode.X) ? -10 : 10;
-            while (currPoint.X != EndNode.X)
-            {
-                currPoint.X += step;
-                if (!horizontalLineOnPoint.ContainsKey(new Point(currPoint.X, currPoint.Y)))
-                {
-                    horizontalLineOnPoint.Add(new Point(currPoint.X, currPoint.Y), LineType.Horizontal);
-                    Line l1 = new Line();
-                    l1.Stroke = Brushes.DeepSkyBlue;
-                    l1.X1 = prevPoint.X + 5;
-                    l1.Y1 = prevPoint.Y + 5;
+            line.X1 = point1.X + 4.5;
+            line.Y1 =point1.Y + 4.5;
+            line.X2 = point2.X + 4.5;
+            line.Y2 = point2.Y + 4.5;
 
-                    l1.X2 = currPoint.X + 5;
-                    l1.Y2 = currPoint.Y + 5;
-                    l1.StrokeThickness = 2;
+            line.StrokeThickness = 1.5;
 
-                    canvas.Children.Add(l1);
-                }
-
-
-                if (verticalLineOnPoint.ContainsKey(new Point(currPoint.X, currPoint.Y)))
-                {
-                    tackePreseka.Add(currPoint);
-
-                }
-
-                prevPoint.X = currPoint.X; 
-                
-            }
-
-            step = (currPoint.Y > EndNode.Y) ? -10 : 10;
-            while (currPoint.Y != EndNode.Y)
-            {
-                currPoint.Y+= step;
-                if (!verticalLineOnPoint.ContainsKey(new Point(currPoint.X, currPoint.Y)))
-                {
-                    verticalLineOnPoint.Add(new Point(currPoint.X, currPoint.Y), LineType.Verical);
-                    Line l1 = new Line();
-                    l1.Stroke = Brushes.DeepSkyBlue;
-                    l1.X1 = prevPoint.X + 5;
-                    l1.Y1 = prevPoint.Y + 5;
-
-                    l1.X2 = currPoint.X + 5;
-                    l1.Y2 = currPoint.Y + 5;
-                    l1.StrokeThickness = 2;
-
-                    canvas.Children.Add(l1);
-                }
-                if(horizontalLineOnPoint.ContainsKey(new Point(currPoint.X, currPoint.Y))) {
-                    tackePreseka.Add(currPoint);
-
-                }
-                prevPoint.Y = currPoint.Y;
-
-            }
-
-            return points;
+            return line;
         }
+        
 
         private static Ellipse createNewEllipse(Color color)
         {
-            Ellipse elipse = new Ellipse();
-            elipse.Height = 9;
-            elipse.Width = 9;
-            elipse.Fill = new SolidColorBrush(color);
-            
-            return elipse;
+            Ellipse ellipse = new Ellipse();
+            ellipse.Height = 9;
+            ellipse.Width = 9;
+            ellipse.Fill = new SolidColorBrush(color);
+            return ellipse;
         }
 
         private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -296,8 +302,9 @@ namespace grafikaPZ2
                     To = 90,
                     Duration = TimeSpan.FromSeconds(1.5)
                 };
-                mapCanvas.Children.Remove(clickedShape);
-                mapCanvas.Children.Add(clickedShape);
+
+                mapCanvas.Children.Remove(clickedShape); //
+                mapCanvas.Children.Add(clickedShape);    // ova i prethodna linija čisto da se objekat iscrta ispred svih drugih objekata....
 
                 Storyboard.SetTargetProperty(widthAnimation, new PropertyPath(Ellipse.WidthProperty));
                 Storyboard.SetTarget(widthAnimation, clickedShape);
@@ -313,8 +320,40 @@ namespace grafikaPZ2
                 s.Begin();
 
             }
+            else if(clickedShape != null && clickedShape.GetType().Name.ToString() == "Line")
+            {
+               
+                if (System.Windows.Forms.MessageBox.Show("Oboji čvorove povezane ovim vodom drugacijom bojom od ostalih", "", MessageBoxButtons.YesNo)== System.Windows.Forms.DialogResult.Yes)
+                {
+                    string[] tool = clickedShape.ToolTip.ToString().Split('\n');
+
+                    double FirstNodeId = double.Parse((tool[3].Split(':'))[1]);
+                    double SecoundNodeId = double.Parse((tool[4].Split(':'))[1]);
+                    Random rnd = new Random();
+                    Color randomColor = Color.FromRgb(250, Convert.ToByte(rnd.Next(0, 250)), 0);
+                    foreach (var node in mapCanvas.Children)
+                    {
+                        Shape ellipse = node as Shape;
+                        if (ellipse.GetType().Name.ToString() == "Ellipse")
+                        {
+                            double nodeID = double.Parse(ellipse.ToolTip.ToString().Split('\n')[1].Split(':')[1]);
+
+                            if (nodeID == FirstNodeId)
+                            {
+                                ellipse.Fill = new SolidColorBrush(randomColor);
+                            }
+                            else if (nodeID == SecoundNodeId)
+                            {
+                                ellipse.Fill = new SolidColorBrush(randomColor);
+                            }
+                        }
+                    }
+
+                }
+            }
 
         }
+
         private void StoryboardCompleted(Shape e)
         {
             DoubleAnimation myDoubleAnimation2 = new DoubleAnimation();
@@ -325,8 +364,6 @@ namespace grafikaPZ2
             e.BeginAnimation(Ellipse.HeightProperty, myDoubleAnimation2);
         }
 
-
-
         private static Model.Point CreatePoint(double longitude, double latitude)
         {
             double ValueoOfOneLongitude=(maxLongitude - minLongitude) / 2200; //pravimo 2200delova (Longituda) jer nam je canvas 2200x2200 
@@ -335,14 +372,14 @@ namespace grafikaPZ2
             double x =Math.Round((longitude - minLongitude) / ValueoOfOneLongitude); // koliko longituda stane u rastojanje izmedju trenutne i minimalne longitude
             double y =Math.Round(( maxLatitude - latitude ) / ValueoOfOneLatitude);
        
-            x = x - x % 10;
-            y = y - y % 10;
+            x = x - x % 10; // zaokruzi na prvi broj deljiv sa 10, toliko ce nam biti rastojanje izmedju dva susedna x
+            y = y - y % 10; // zaokruzi na prvi broj deljiv sa 10,, toliko ce nam biti rastojanje izmedju dva susedna y
 
             int cout = 0;
             
                 while(true)
                 {
-                    if (ExistingPoints.Any(z => z.Value.X == x && z.Value.Y == y))
+                    if (collectionOfNodes.Any(z => z.Value.X == x && z.Value.Y == y))
                     {
                         if ( cout == 0)
                         {
@@ -411,12 +448,6 @@ namespace grafikaPZ2
                 Y = y,
             };
         }
-
-
-
-
-
-
 
 
         public static XmlEntities ParseXml()
